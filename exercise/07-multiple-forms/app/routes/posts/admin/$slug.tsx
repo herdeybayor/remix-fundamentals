@@ -133,7 +133,7 @@ export default function PostAdmin() {
         />
       </p>
       <p className="space-x-4 text-right">
-        {data?.post && (
+        {isNewPost ? null : (
           <button
             type="submit"
             name="intent"
