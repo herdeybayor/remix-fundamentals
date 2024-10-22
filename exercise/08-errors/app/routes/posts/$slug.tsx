@@ -1,16 +1,20 @@
 import { marked } from "marked";
 import type { LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
 import { getPost } from "~/models/post.server";
+import { ErrorFallback } from "~/components";
 
 export async function loader({ params }: LoaderArgs) {
   invariant(params.slug, `params.slug is required`);
 
   const post = await getPost(params.slug);
-  invariant(post, `Post not found: ${params.slug}`);
+
+  if (!post) {
+    throw json("not found", { status: 404 });
+  }
 
   const html = marked(post.markdown);
   return json({ post, html });
@@ -26,5 +30,16 @@ export default function PostSlug() {
   );
 }
 
-// 🐨 Add an ErrorBoundary component to this
-// 💰 You can use the ErrorFallback component from "~/components"
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  if (caught.status === 404) {
+    return <ErrorFallback>Post not found</ErrorFallback>;
+  }
+
+  throw new Error("Unexpected error with status " + caught.status);
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return <ErrorFallback>{error.message}</ErrorFallback>;
+}
